@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import Simulation from './components/Simulation.vue'
 </script>
 
 <template>
-  <HelloWorld msg="Vite + Vue" />
+  <Simulation />
 </template>
