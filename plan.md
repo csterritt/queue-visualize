@@ -1,6 +1,7 @@
 # Implementation Plan: Queue Visualizer Simulation
 
 ## 1. Objectives and Scope
+
 - Model a discrete-time queue/processor simulation using Pinia stores for tasks, queues, and processors plus a Manager orchestrator.
 - Provide a `Simulation.vue` UI that configures entity counts, starts/stops the simulation loop, exposes current time/state, and renders per-queue and per-processor status cards.
 - Supply node-based unit tests that validate core behaviors (task lifecycle, queue dispatching, processors finishing work, manager orchestration).
@@ -8,17 +9,21 @@
 ## 2. Data Models and Stores
 
 ### 2.1 Task Store (`src/stores/task-store.ts`)
+
 - **State**
   - `nextId: number` – increments every time a fresh task is created.
   - `pool: Task[]` – stack/queue (array) of reusable tasks returned by processors.
 - **Task interface**
+
   ```ts
   interface Task {
     id: number
     duration: number // seconds, integer >= 1
   }
   ```
+
   - Task constructor/creator takes an optional duration (default `1`). Validation ensures `duration >= 1`.
+
 - **API**
   - `newTask(duration?: number): Task`
     - If `pool` is empty, creates a new task with auto ID and given duration.
@@ -27,7 +32,9 @@
   - Potential helper `createTask(duration: number): Task` for internal creation.
 
 ### 2.2 Queue Store (`src/stores/queue-store.ts`)
+
 - **Queue model**
+
   ```ts
   interface QueueConfig {
     id: number
@@ -42,6 +49,7 @@
     failed: boolean
   }
   ```
+
 - **State**
   - `queues: QueueState[]`
   - `nextId` for queue IDs.
@@ -55,6 +63,7 @@
     - Attempt dispatch: loop processors, if queue has pending tasks and processor `checkReady()` returns true, shift first task and call `processor.acceptTask(task)`.
 
 ### 2.3 Processor Store (`src/stores/processors-store.ts`)
+
 - **Processor model**
   ```ts
   interface ProcessorState {
@@ -76,6 +85,7 @@
   - `stepTime(currentTime, taskStore)` – when `currentTask` exists and `currentTime >= busyUntil`, call `taskStore.returnTask(task)` and mark processor free.
 
 ## 3. Manager (`src/simulation/manager.ts` or similar)
+
 - **Constants**: `ONE_TO_ONE`, `ONE_TO_MANY`, `STOPPED`, `RUNNING`.
 - **State**
   - References to queue & processor stores and task store.
@@ -89,17 +99,18 @@
     - Connect queues to processors according to connection mode.
     - Set `status = RUNNING`, `currentTime = 0`.
   - `stopSimulation()` – stop timers, set `status = STOPPED`.
-  - `stepSimulation()` – called per tick regardless of RUNNING vs manual step.
+  - `stepSimulation()` – called by manual step.
     - For each processor: `processorStore.stepTime(currentTime)`.
     - For each queue: `queueStore.stepTime(currentTime, processorStore, taskStore)`.
     - After stepping, check if any queue failed -> stop simulation.
     - Increment `currentTime += 1`.
-  - Manage enabling/disabling UI Step button depending on whether queues/processors exist.
+  - Manage enabling/disabling UI Step button depending on whether queues/processors exist, and when any queue fails.
   - Provide computed getters for `isRunning`, `isReady` (entities created), etc.
 
 ## 4. UI Components
 
 ### 4.1 `Simulation.vue`
+
 - **Sections**
   1. **Configuration Controls (Top Row)**
      - Two `<select>` inputs bound to local refs `queueCount`, `processorCount` (1–10). Maybe use `<select class="select select-bordered">` with DaisyUI styles.
@@ -115,6 +126,7 @@
   - Watches manager status to enable Step button and update statuses.
 
 ### 4.2 Supporting Components
+
 - `QueueDisplay.vue`
   - Props: queue state object.
   - Shows queue name, `tasks.length`, `lengthLimit`, maybe badge when failed.
@@ -124,6 +136,7 @@
 - Styling with Tailwind/DaisyUI cards/lists for clarity.
 
 ## 5. Testing Strategy
+
 - Use Node/Vitest (if configured) or simple Jest-like environment per existing tooling (check package.json; likely `vitest`). Write tests under `src/__tests__/` or `tests/` mirroring store files.
 - **Task Store Tests**
   - Creating tasks increments IDs and enforces minimum duration.
@@ -144,6 +157,7 @@
 - Where direct time progression is needed, manually invoke `stepSimulation` to avoid timers in tests.
 
 ## 6. Implementation Steps
+
 1. **Set up stores directory structure** with new Pinia stores for tasks, queues, processors (plus exports/index if needed).
 2. **Implement Task model** with reusable pool logic.
 3. **Implement Processor store** including time-stepping logic and readiness checks.
@@ -155,10 +169,11 @@
 9. **Manual QA** by running dev server to verify UI interactions (optional but recommended locally).
 
 ## 7. Open Questions / Ambiguities
-1. **Task duration override when reusing from pool**: Should reused tasks keep their previous duration or be overwritten by the `newTask` request? (Assumption: allow specifying new duration to simulate different workloads.)
-2. **Queue production interval defaults**: Are intervals and length limits user-configurable per queue, or do we apply fixed defaults? Requirements specify constructor arguments but UI doesnt expose them; plan assumes fixed defaults set during manager initialization.
-3. **Simulation pacing**: Should `Start simulation` trigger continuous automatic stepping, or just instantiate entities and rely on manual `Step` presses? Requirements imply manager loops automatically until stopped, yet there is also a manual Step button. Need clarity on coexistence (e.g., Step disabled while running automatically?).
-4. **Processor task durations**: Are tasks immutable once created? If reused, should their IDs remain constant? (Currently assuming yes to maintain identity.)
-5. **Queue failure behavior**: Once any queue fails, do others immediately halt even if tasks remain? Plan assumes manager stops entire simulation and leaves states visible.
-6. **Testing framework**: Confirm whether Vitest is available; if not, need guidance on the expected simple node tests (plain Node asserts?).
-7. **Connection constants exposure**: Should UI allow toggling between `ONE_TO_ONE` and `ONE_TO_MANY` yet, or only programmatic for now?
+
+1. **Task duration override when reusing from pool**: Reused tasks have their previous duration overwritten by the `newTask` request.
+2. **Queue production interval defaults**: Are intervals and length limits user-configurable per queue, or do we apply fixed defaults? Requirements specify constructor arguments but UI doesn't expose them; plan assumes fixed defaults set during manager initialization.
+3. **Simulation pacing**: Initially, there should be no automatic stepping. Just instantiate entities and rely on manual `Step` presses.
+4. **Processor task durations**: Tasks are not immutable; reused tasks have their previous duration overwritten by the `newTask` request, and are given a new ID.
+5. **Queue failure behavior**: Once any queue fails, all others immediately halt even if tasks remain. Manager stops entire simulation and leaves states visible.
+6. **Testing framework**: Use Vitest for tests.
+7. **Connection constants exposure**: The UI should allow toggling between `ONE_TO_ONE` and `ONE_TO_MANY`.
