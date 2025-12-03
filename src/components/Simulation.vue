@@ -23,17 +23,23 @@ const errorMessage = ref<string | null>(null)
 const countOptions = Array.from({ length: 10 }, (_, index) => index + 1)
 
 const statusLabel = computed(() =>
-  manager.status === SimulationStatus.RUNNING ? 'Running' : 'Stopped',
+  manager.status === SimulationStatus.RUNNING ? 'Running' : 'Stopped'
 )
 const statusVariant = computed(() =>
-  manager.status === SimulationStatus.RUNNING ? 'badge-success' : 'badge-neutral',
+  manager.status === SimulationStatus.RUNNING
+    ? 'badge-success'
+    : 'badge-neutral'
 )
 
 const canStep = computed(() => manager.isReady && manager.isRunning)
 
 const handleStart = (): void => {
   try {
-    manager.startSimulation(queueCount.value, processorCount.value, connectionMode.value)
+    manager.startSimulation(
+      queueCount.value,
+      processorCount.value,
+      connectionMode.value
+    )
     errorMessage.value = null
   } catch (error) {
     errorMessage.value =
@@ -54,8 +60,8 @@ const handleStop = (): void => {
           <div class="flex flex-col gap-1">
             <h2 class="card-title">Simulation Setup</h2>
             <p class="text-sm text-base-content/70">
-              Configure entity counts and a connection mode, then press Start to begin stepping
-              through time.
+              Configure entity counts and a connection mode, then press Start to
+              begin stepping through time.
             </p>
           </div>
 
@@ -66,24 +72,42 @@ const handleStop = (): void => {
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <label class="form-control w-full">
               <div class="label"><span class="label-text">Queues</span></div>
-              <select v-model.number="queueCount" class="select select-bordered">
-                <option v-for="option in countOptions" :key="`queue-${option}`" :value="option">
+              <select
+                v-model.number="queueCount"
+                class="select select-bordered"
+              >
+                <option
+                  v-for="option in countOptions"
+                  :key="`queue-${option}`"
+                  :value="option"
+                >
                   {{ option }}
                 </option>
               </select>
             </label>
 
             <label class="form-control w-full">
-              <div class="label"><span class="label-text">Processors</span></div>
-              <select v-model.number="processorCount" class="select select-bordered">
-                <option v-for="option in countOptions" :key="`processor-${option}`" :value="option">
+              <div class="label">
+                <span class="label-text">Processors</span>
+              </div>
+              <select
+                v-model.number="processorCount"
+                class="select select-bordered"
+              >
+                <option
+                  v-for="option in countOptions"
+                  :key="`processor-${option}`"
+                  :value="option"
+                >
                   {{ option }}
                 </option>
               </select>
             </label>
 
             <div class="form-control lg:col-span-2">
-              <div class="label"><span class="label-text">Connection Mode</span></div>
+              <div class="label">
+                <span class="label-text">Connection Mode</span>
+              </div>
               <div class="flex flex-wrap gap-4">
                 <label
                   class="label cursor-pointer gap-2 rounded-box border border-base-300 px-3 py-2"
@@ -138,7 +162,7 @@ const handleStop = (): void => {
       </div>
 
       <div class="card bg-base-100 shadow">
-        <div class="card-body flex flex-wrap items-center gap-6">
+        <div class="card-body flex flex-row flex-wrap items-center gap-6">
           <div>
             <p class="text-sm text-base-content/70">Current Time</p>
             <p class="text-4xl font-bold">{{ manager.currentTime }}</p>
@@ -147,14 +171,22 @@ const handleStop = (): void => {
             <span class="text-sm text-base-content/70">Status</span>
             <span class="badge" :class="statusVariant">{{ statusLabel }}</span>
           </div>
-          <div class="flex flex-1 flex-wrap justify-end gap-2">
-            <div class="stat">
-              <div class="stat-title">Queues</div>
-              <div class="stat-value text-primary">{{ queueStore.queues.length }}</div>
+          <div class="flex flex-row flex-wrap justify-end gap-2">
+            <div>
+              <div class="stat">
+                <div class="stat-title">Queues</div>
+                <div class="stat-value text-primary">
+                  {{ queueStore.queues.length }}
+                </div>
+              </div>
             </div>
-            <div class="stat">
-              <div class="stat-title">Processors</div>
-              <div class="stat-value text-secondary">{{ processorStore.processors.length }}</div>
+            <div>
+              <div class="stat">
+                <div class="stat-title">Processors</div>
+                <div class="stat-value text-secondary">
+                  {{ processorStore.processors.length }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -164,9 +196,15 @@ const handleStop = (): void => {
         <section class="space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold">Queues</h3>
-            <span class="badge badge-outline">{{ queueStore.queues.length }}</span>
+            <span class="badge badge-outline">{{
+              queueStore.queues.length
+            }}</span>
           </div>
-          <QueueDisplay v-for="queue in queueStore.queues" :key="queue.id" :queue="queue" />
+          <QueueDisplay
+            v-for="queue in queueStore.queues"
+            :key="queue.id"
+            :queue="queue"
+          />
           <p v-if="!queueStore.queues.length" class="text-base-content/70">
             No queues configured yet. Start a simulation to see queue state.
           </p>
@@ -175,7 +213,9 @@ const handleStop = (): void => {
         <section class="space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold">Processors</h3>
-            <span class="badge badge-outline">{{ processorStore.processors.length }}</span>
+            <span class="badge badge-outline">{{
+              processorStore.processors.length
+            }}</span>
           </div>
           <ProcessorDisplay
             v-for="processor in processorStore.processors"
@@ -183,7 +223,10 @@ const handleStop = (): void => {
             :processor="processor"
             :current-time="manager.currentTime"
           />
-          <p v-if="!processorStore.processors.length" class="text-base-content/70">
+          <p
+            v-if="!processorStore.processors.length"
+            class="text-base-content/70"
+          >
             No processors have been created.
           </p>
         </section>
