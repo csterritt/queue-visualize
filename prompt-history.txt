@@ -1,0 +1,49 @@
+## Prompt history
+
+----
+
+# Plan build
+Please write a plan, in a file named 'plan.md' in the top level directory of the project.
+
+This project is set up as a simple queue visualizer built with Vue 3, Tailwind CSS, DaisyUI, and Pinia.
+
+Plan so that it will do the following.
+
+## Data structures
+
+### Tasks
+a task is just a simple typescript object with an ID (auto-generated) and a duration, in seconds. the duration should be at least one second, but can be more. the constructor of the task should take the duration, but has a default of 1 second. The tasks are stored in a pinia store in the file 'task-store.ts' in the 'stores' top-level directory.  There is a function named 'newTask' in the task store, that returns a new task if its internal list of tasks is empty. otherwise, it removes a task from its internal list and returns that. there is a function called 'returnTask' that returns a task to the store, and stores the task on the internal list of tasks.
+
+### Queues
+There will be a group of queues. they are stored in a pinia store in the file 'queue-store.ts'. each queue contains a list of tasks. the queue constructor takes two arguments. the first is an integer, which specifies the time interval to produce a new task, and the second is an integer, which is the length limit. the length limit specifies how long the queue can get before it stops with a failure condition. the queue also has a method called 'connectToProcessor', that takes a processor as an argument. that processor is added to the queue's list of processors to send tasks to. every time period, the queue will check its internal clock, and see if it's time to generate another task. when it's time to generate a new task, it generates a new task and puts it on the end of its interal list of tasks waiting. every time period, if its task list contains at least one task, it will check all the processors in its list to see if any are free to accept a new task, and if so, it will remove the first task and hand it to that processer via the processor's 'acceptTask' method.
+
+### Processors
+There will be a group of processors. they are stored in a pinia store in the file 'processors-store.ts' in the 'stores' directory. a processor is just a simple typescript object, that has a method that returns true if it's able to accept a task named 'checkReady', and a method to accept a task named 'acceptTask'. once a task is given to a processor, it becomes unavailable to accept another task. when a processor has a task, it waits for the duration of the task, then the processor returns the task to the task store via the 'returnTask' method, and it becomes available to accpt another task.
+
+### Manager
+The manager is a simple typescript object that knows about the processor store and the queue store. it has a 'startSimulation' method that takes a number of queues to create, a number of processors to create, and a connection. the connection will be one of the constants 'ONE_TO_ONE' or 'ONE_TO_MANY'. when the connection is 'ONE_TO_ONE', there must be the same number of queues as processors. the first queue is connected to the first processor, the second queue is connected to the second processor, and so on. when the connection is 'ONE_TO_MANY', then there can be any number greater than zero of queues and any number greater than zero of processors, and every queue is connected to every processor. the manager maintains the system clock, and sends a 'stepTime' method call to each queue and processor with the current time. it then allows the user interface to update, increments the current time, and loops to update the time again. The manager contains an inProcess indicator, which is either constant 'STOPPED' or 'RUNNING'. Once the objects are created in the 'startSimulation' method, the inProcess indicator should go to 'RUNNING' and continue until either it's stopped by a call to the manager's 'stopSimulation' method, or when any queue goes into the failure condition. in either of those cases, the inProcess indicator will go to 'STOPPED'.
+
+## User interface
+
+There will be a new Vue3 file named 'Simulation.vue' in the components directory. it will show, at the top, a row of controls. this row will contain a drop-down named 'Number of queues'. the drop-down will allow selection of the integers 1 through 10. the controls will also contain a drop-down named 'Number of processors'. the drop-down will allow selection of the integers 1 through 10. lastly, the controls will contain a 'Start simulation' button. Clicking it will start the simulation running.
+
+Below the controls will be a panel with the simulation objects. at the top will be a row of controls, the first a display showing the manager's current time, and an indicator showing either 'Running' or 'Stopped'. It starts in 'Stopped' mode, and displays 'Running' as long as the manager's inProcess indicator is running. the next control will be a 'Step' button, that will advance time by one time step. The 'Step' button will start out disabled.
+
+As each Queue is created, a new QueueDisplay Vue3 display is created, that shows the queue's length. these will be shown down the left side of the display.
+
+As each Processor is created, a new ProcessorDisplay Vue3 display is created, which shows the Processor's current state, ready or busy.
+
+Once all the Queues and Processors are created, the 'Step' button will be enabled.
+
+## Testing
+
+There should be simple node tests written for each of the above objects and methods.
+
+## Implementation preparation
+
+Describe the implementation of all of the above, and give detailed specifications, and create a list of any open questions if there are ambiguous requirements.
+
+----
+
+# Plan implementation
+please implement the code, based on the updated `plan.md` that I just pushed.
